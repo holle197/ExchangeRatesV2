@@ -3,12 +3,17 @@ using ExchangeRatesV2.Core.Fetchers.Fixer;
 using ExchangeRatesV2.Core.Interfaces;
 using ExchangeRatesV2.Data;
 using ExchangeRatesV2.Data.Repositories;
+using ExchangeRatesV2.Web.Health;
 using ExchangeRatesV2.Web.Middlewares;
+using HealthChecks.UI.Client;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("Database")
+                                  .AddCheck<FetcherHealthCheck>("Fixer");
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -34,6 +39,11 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.MapHealthChecks("/_health",new HealthCheckOptions
+{
+    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+});
 
 app.UseAuthorization();
 app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
